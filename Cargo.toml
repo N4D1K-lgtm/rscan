@@ -1,7 +1,11 @@
 [package]
-name = "net_discovery"
+name = "rscan"
 version = "0.1.0"
 edition = "2021"
+description = "A fast, modular and portable network infrastructure enumeration tool."
+authors = ["Kidan Nelson <nelsonkidan@gmail.com>"]
+repository = "https://github.com/N4D1K-lgtm/rscan"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -12,3 +16,5 @@ prettytable-rs = "0.10.0"
 anyhow = "1.0.75"
 async-trait = "0.1.74"
 colored = "2.0.4"
+futures = "0.3.29"
+regex = "1.10.2"
