@@ -1,6 +1,6 @@
 # rscan
 
-A simple, modular, asynchronous network enumeration tool built with rust, tokio and clap.
+A simple, modular and asynchronous network enumeration tool built with rust, tokio and clap.
 
 ## Sample Output
 
