@@ -1,0 +1,16 @@
+[package]
+name = "rscan_core"
+description = "The core library of rscan, depended on by rscan-derive and rscan-cli"
+edition.workspace = true
+authors.workspace = true
+version.workspace = true
+documentation.workspace = true
+
+[lib]
+
+[dependencies]
+enum_dispatch = { workspace = true }
+inventory = { workspace = true }
+thiserror = { workspace = true }
+prettytable = { workspace = true }
+futures = { workspace = true }

@@ -1,74 +1,42 @@
-use clap::{ArgGroup, Parser};
-use std::error::Error;
+use clap::Parser;
 
-mod modules;
-mod styles;
+use rscan_core::prelude::*;
+use rscan_derive::module;
 
-use modules::ModuleManager;
-pub use styles::*;
+mod cli;
 
-#[derive(Parser)]
-#[command(author, version, about, long_about = None)]
-#[command(group(ArgGroup::new("module").args(&["gateway", "dns", "arp", "lldp", "all"]).required(false)))]
-struct Cli {
-    /// get default gateway IP address(s)
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    gateway: bool,
-
-    /// get DNS server(s)
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    dns: bool,
-
-    /// get ARP/NDP table
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    arp: bool,
-
-    /// get LLDP neighbors
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    lldp: bool,
-
-    /// run every module
-    #[arg(long, action = clap::ArgAction::SetTrue)]
-    all: bool,
-}
+use cli::Cli;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() {
     let cli = Cli::parse();
 
-    let module_manager = ModuleManager::new();
+    println!("{:?}", get_names().await);
 
-    let all_module_names = module_manager.get_module_names();
-
-    // Determine which modules to run based on the CLI input
-    let mut modules_to_run = vec![];
-    if cli.all {
-        modules_to_run.extend(all_module_names);
-    } else {
-        if cli.gateway {
-            modules_to_run.push("gateway".to_string());
-        }
-        if cli.dns {
-            modules_to_run.push("dns".to_string());
-        }
-        if cli.arp {
-            modules_to_run.push("arp".to_string());
-        }
-        if cli.lldp {
-            modules_to_run.push("lldp".to_string());
-        }
-
-        // Default to all modules if none are specified
-        if modules_to_run.is_empty() {
-            modules_to_run.extend(all_module_names);
+    for result in execute_all().await {
+        match result {
+            Ok(table) => println!("{}", table),
+            Err(e) => println!("Error running module {}", e),
         }
     }
-
-    let tables = module_manager.run_selected_modules(&modules_to_run).await?;
-
-    ModuleManager::print_tables(tables);
-
-    Ok(())
+}
+#[module("Dummy Module")]
+fn example_module() -> ModuleResult {
+    let mut table = prettytable::Table::new();
+    table.add_row(prettytable::row!["Hello", "World"]);
+    Ok(table)
 }
 
-// Implement the trait for your actual modules...
+#[module]
+fn nate_is_silly() -> ModuleResult {
+    let mut table = prettytable::Table::new();
+    table.add_row(prettytable::row!["nate", "was", "here"]);
+    Ok(table)
+}
+
+#[module("New Module")]
+fn new_module() -> ModuleResult {
+    let mut table = prettytable::Table::new();
+    table.add_row(prettytable::row!["New", "Module"]);
+    Ok(table)
+}
