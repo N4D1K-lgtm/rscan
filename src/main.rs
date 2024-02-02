@@ -159,10 +159,9 @@ fn ui<B: Backend>(f: &mut Frame<B>, app: &mut App) {
 #[module(
     "Configuration Backup",
     "Backs up configurations of network devices.",
-    "Utility Worker",
+    "Lebron James",
     "1.0",
-    "Utility Tools",
-    "Windows"
+    "Utility Tools"
 )]
 fn configuration_backup_module() -> ModuleResult {
     // Implementation

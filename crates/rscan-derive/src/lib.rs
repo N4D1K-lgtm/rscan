@@ -8,7 +8,6 @@ struct ModuleArgs {
     author: LitStr,
     version: LitStr,
     category: LitStr,
-    platforms: LitStr,
 }
 
 impl Parse for ModuleArgs {
@@ -22,8 +21,6 @@ impl Parse for ModuleArgs {
         let version = input.parse()?;
         input.parse::<Token![,]>()?;
         let category = input.parse()?;
-        input.parse::<Token![,]>()?;
-        let platforms = input.parse()?;
 
         Ok(ModuleArgs {
             name,
@@ -31,7 +28,6 @@ impl Parse for ModuleArgs {
             author,
             version,
             category,
-            platforms,
         })
     }
 }
@@ -49,7 +45,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
         author,
         version,
         category,
-        platforms,
     } = args;
 
     let kind_expr = quote! { rscan_core::ModuleKind::Sync(#fn_name) };
@@ -66,8 +61,6 @@ pub fn module(args: TokenStream, input: TokenStream) -> TokenStream {
                 version: #version,
                 category: #category,
                 kind: #kind_expr,
-                platforms: rscan_core::parse_platforms(#platforms),
-
             }
         }
     };

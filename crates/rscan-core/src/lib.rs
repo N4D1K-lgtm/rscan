@@ -18,29 +18,6 @@ pub enum ModuleKind {
     Sync(fn() -> ModuleResult),
 }
 
-pub enum Platform {
-    Windows,
-    Linux,
-    MacOS,
-    All,
-}
-
-pub fn parse_platforms(platforms: &str) -> Vec<Platform> {
-    let mut result = Vec::new();
-    for platform in platforms.split(',') {
-        match platform.trim().to_lowercase().as_str() {
-            "windows" => result.push(Platform::Windows),
-            "linux" => result.push(Platform::Linux),
-            "macos" => result.push(Platform::MacOS),
-            "all" => result.push(Platform::All),
-            _ => {
-                panic!("Invalid platform: {}", platform);
-            }
-        }
-    }
-    result
-}
-
 pub struct Module {
     // Display name of the module ex. "Default Gateway"
     pub name: &'static str,
@@ -53,8 +30,6 @@ pub struct Module {
     pub category: &'static str,
     // async or sync
     pub kind: ModuleKind,
-    // platform support
-    pub platforms: Vec<Platform>,
 }
 
 impl Module {
