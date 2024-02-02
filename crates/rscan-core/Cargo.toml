@@ -1,6 +1,6 @@
 [package]
 name = "rscan_core"
-description = "The core library of rscan, depended on by rscan-derive and rscan-cli"
+description = "The core library of rscan"
 edition.workspace = true
 authors.workspace = true
 version.workspace = true

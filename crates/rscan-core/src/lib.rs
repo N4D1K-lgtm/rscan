@@ -1,8 +1,8 @@
-use futures::future::join_all;
 use prettytable::Table;
-use std::future::Future;
-use std::pin::Pin;
 use thiserror::Error;
+
+mod utils;
+pub use utils::*;
 
 pub mod prelude;
 
@@ -13,60 +13,56 @@ pub enum ModuleError {
 }
 
 pub type ModuleResult = Result<Table, ModuleError>;
-pub type AsyncModuleResult = Pin<Box<dyn Future<Output = ModuleResult> + Send>>;
 
 pub enum ModuleKind {
     Sync(fn() -> ModuleResult),
-    Async(fn() -> AsyncModuleResult),
+}
+
+pub enum Platform {
+    Windows,
+    Linux,
+    MacOS,
+    All,
+}
+
+pub fn parse_platforms(platforms: &str) -> Vec<Platform> {
+    let mut result = Vec::new();
+    for platform in platforms.split(',') {
+        match platform.trim().to_lowercase().as_str() {
+            "windows" => result.push(Platform::Windows),
+            "linux" => result.push(Platform::Linux),
+            "macos" => result.push(Platform::MacOS),
+            "all" => result.push(Platform::All),
+            _ => {
+                panic!("Invalid platform: {}", platform);
+            }
+        }
+    }
+    result
 }
 
 pub struct Module {
+    // Display name of the module ex. "Default Gateway"
     pub name: &'static str,
+    // unique identifier for the module ex. "default_gateway"
+    pub identifier: &'static str,
+    pub description: &'static str,
+    pub author: &'static str,
+    pub version: &'static str,
+    // category of the module ex. "Active Directory", "Passive Discovery"
+    pub category: &'static str,
+    // async or sync
     pub kind: ModuleKind,
+    // platform support
+    pub platforms: Vec<Platform>,
 }
 
 impl Module {
     pub async fn execute(&self) -> ModuleResult {
         match &self.kind {
             ModuleKind::Sync(func) => func(),
-            ModuleKind::Async(func) => func().await,
         }
     }
 }
 
 inventory::collect!(Module);
-
-pub async fn get(name: Vec<&str>) -> Vec<Option<&'static Module>> {
-    inventory::iter::<Module>
-        .into_iter()
-        .filter(|m| name.contains(&m.name))
-        .map(Some)
-        .collect()
-}
-
-pub async fn get_names() -> Vec<String> {
-    inventory::iter::<Module>
-        .into_iter()
-        .map(|m| m.name.to_string())
-        .collect()
-}
-
-pub async fn get_all() -> Vec<&'static Module> {
-    inventory::iter::<Module>.into_iter().collect()
-}
-
-pub async fn execute_all() -> Vec<ModuleResult> {
-    let modules = get_all().await;
-    let futures: Vec<_> = modules.into_iter().map(|m| m.execute()).collect();
-    join_all(futures).await
-}
-
-pub async fn execute(name: Vec<&str>) -> Vec<ModuleResult> {
-    let modules = get_all().await;
-    let futures: Vec<_> = modules
-        .into_iter()
-        .filter(|m| name.contains(&m.name))
-        .map(|m| m.execute())
-        .collect();
-    join_all(futures).await.into_iter().collect()
-}

@@ -14,6 +14,8 @@ inventory = "0.3.15"
 tokio = { version = "1.33.0", features = ["full"] }
 clap = { version = "4.4.18", features = ["derive"] }
 inquire = "0.6.2"
+tui = "0.19.0"
+crossterm = "0.27.0"
 
 [workspace]
 members = ["crates/*"]
@@ -35,3 +37,4 @@ tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 thiserror = "1.0.56"
 futures = "0.3.30"
+tui = "0.19.0"
