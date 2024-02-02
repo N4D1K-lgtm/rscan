@@ -11,15 +11,23 @@ use cli::Cli;
 async fn main() {
     let cli = Cli::parse();
 
-    println!("{:?}", get_names().await);
+    let selected = inquire::MultiSelect::new(
+        "Select which modules you would like to run.",
+        get_names().await,
+    )
+    .prompt()
+    .unwrap();
 
-    for result in execute_all().await {
+    let selected_str: Vec<&str> = selected.iter().map(AsRef::as_ref).collect();
+
+    for result in execute(selected_str).await {
         match result {
             Ok(table) => println!("{}", table),
             Err(e) => println!("Error running module {}", e),
         }
     }
 }
+
 #[module("Dummy Module")]
 fn example_module() -> ModuleResult {
     let mut table = prettytable::Table::new();
