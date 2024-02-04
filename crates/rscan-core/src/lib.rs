@@ -12,7 +12,7 @@ pub enum ModuleError {
     ExecutionError,
 }
 
-pub type ModuleResult = Result<Table, ModuleError>;
+pub type ModuleResult = Box<Result<Table, ModuleError>>;
 
 pub enum ModuleKind {
     Sync(fn() -> ModuleResult),

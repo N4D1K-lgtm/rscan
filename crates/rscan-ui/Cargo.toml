@@ -1,5 +1,5 @@
 [package]
-name = "rscan-ui"
+name = "rscan_ui"
 description = "rscan-ui"
 version.workspace = true
 edition.workspace = true
@@ -7,6 +7,7 @@ authors.workspace = true
 repository.workspace = true
 documentation.workspace = true
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+
+crossterm = { workspace = true }
+tui = { workspace = true }
