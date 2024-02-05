@@ -6,13 +6,15 @@ authors.workspace = true
 version.workspace = true
 documentation.workspace = true
 
-[lib]
 
 [dependencies]
 enum_dispatch = { workspace = true }
+clap = { workspace = true }
 inventory = { workspace = true }
 thiserror = { workspace = true }
 prettytable = { workspace = true }
 futures = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
+tokio = { workspace = true }
+async-trait = { workspace = true }

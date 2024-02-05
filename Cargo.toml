@@ -12,11 +12,11 @@ rscan_derive = { path = "crates/rscan-derive" }
 prettytable = "0.10.0"
 inventory = "0.3.15"
 tokio = { version = "1.33.0", features = ["full"] }
-clap = { version = "4.4.18", features = ["derive"] }
 inquire = "0.6.2"
 tui = "0.19.0"
 crossterm = "0.27.0"
 rscan_ui = { path = "crates/rscan-ui" }
+async-trait = "0.1.77"
 
 [workspace]
 members = ["crates/*"]
@@ -41,4 +41,6 @@ futures = "0.3.30"
 tui = "0.19.0"
 strum = "0.26.1"
 strum_macros = "0.26.1"
+async-trait = "0.1.77"
 crossterm = "0.27.0"
+clap = { version = "4.4.18", features = ["derive"] }

@@ -1,22 +1,37 @@
+use prettytable::{row, Table};
+use rscan_core::define_module;
 use rscan_core::prelude::*;
-use rscan_derive::module;
 
-pub fn main() {
+#[tokio::main]
+pub async fn main() {
     rscan_ui::setup();
+
+    inventory::iter::<ModuleHolder>.into_iter().for_each(|m| {
+        let module = (m.constructor)();
+        match module {
+            ModuleExecution::Local(module) => {
+                println!("Local module: {}", module.name());
+            }
+            ModuleExecution::Global(module) => {
+                tokio::spawn(async move {
+                    println!("Global module: {}", module);
+                    println!("{}", module.run_async().await.unwrap())
+                });
+            }
+            ModuleExecution::Blocking(module) => {
+                println!("Blocking module: {}", module.name());
+            }
+        }
+    });
 }
 
-#[module(
-    "Configuration Backup",
-    "Backs up configurations of network devices.",
-    "Lebron James",
-    "1.0",
-    "Utility Tools"
-)]
-fn configuration_backup_module() -> ModuleResult {
-    // Implementation
-    let mut table = prettytable::Table::new();
-    table.add_row(prettytable::row!["Device", "Backup Status"]);
-    // Example data
-    table.add_row(prettytable::row!["Switch", "Success"]);
-    Ok(table)
+define_module! {
+    identifier: "example_module",
+    category: "Example",
+    async fn ExampleModule() -> ModuleResult {
+        let mut table = Table::new();
+        table.add_row(row!["Name", "Age"]);
+        table.add_row(row!["John", "20"]);
+        Ok(table)
+    }
 }
