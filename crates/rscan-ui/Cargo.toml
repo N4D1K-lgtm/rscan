@@ -10,4 +10,4 @@ documentation.workspace = true
 [dependencies]
 
 crossterm = { workspace = true }
-tui = { workspace = true }
+ratatui = { workspace = true }

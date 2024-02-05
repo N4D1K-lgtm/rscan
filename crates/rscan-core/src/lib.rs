@@ -26,36 +26,6 @@ pub trait Module {
     fn category(&self) -> &'static str;
 }
 
-impl Display for dyn Module {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}\n{}\n{}\n{}\n{}\n{}",
-            self.name(),
-            self.identifier(),
-            self.description(),
-            self.author(),
-            self.version(),
-            self.category()
-        )
-    }
-}
-
-impl Display for dyn GlobalAsyncModule + Send + Sync {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}\n{}\n{}\n{}\n{}\n{}",
-            self.name(),
-            self.identifier(),
-            self.description(),
-            self.author(),
-            self.version(),
-            self.category()
-        )
-    }
-}
-
 #[async_trait]
 pub trait GlobalAsyncModule: Module + Send + Sync {
     async fn run_async(&self) -> ModuleResult;

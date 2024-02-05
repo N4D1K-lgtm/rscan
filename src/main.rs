@@ -1,37 +1,43 @@
-use prettytable::{row, Table};
-use rscan_core::define_module;
-use rscan_core::prelude::*;
+#![allow(dead_code)]
+#![allow(unused_imports)]
+#![allow(unused_variables)]
 
-#[tokio::main]
-pub async fn main() {
-    rscan_ui::setup();
+pub mod action;
+pub mod app;
+pub mod cli;
+pub mod components;
+pub mod config;
+pub mod mode;
+pub mod tui;
+pub mod utils;
 
-    inventory::iter::<ModuleHolder>.into_iter().for_each(|m| {
-        let module = (m.constructor)();
-        match module {
-            ModuleExecution::Local(module) => {
-                println!("Local module: {}", module.name());
-            }
-            ModuleExecution::Global(module) => {
-                tokio::spawn(async move {
-                    println!("Global module: {}", module);
-                    println!("{}", module.run_async().await.unwrap())
-                });
-            }
-            ModuleExecution::Blocking(module) => {
-                println!("Blocking module: {}", module.name());
-            }
-        }
-    });
+use clap::Parser;
+use cli::Cli;
+use color_eyre::eyre::Result;
+
+use crate::{
+  app::App,
+  utils::{initialize_logging, initialize_panic_handler, version},
+};
+
+async fn tokio_main() -> Result<()> {
+  initialize_logging()?;
+
+  initialize_panic_handler()?;
+
+  let args = Cli::parse();
+  let mut app = App::new(args.tick_rate, args.frame_rate)?;
+  app.run().await?;
+
+  Ok(())
 }
 
-define_module! {
-    identifier: "example_module",
-    category: "Example",
-    async fn ExampleModule() -> ModuleResult {
-        let mut table = Table::new();
-        table.add_row(row!["Name", "Age"]);
-        table.add_row(row!["John", "20"]);
-        Ok(table)
-    }
+#[tokio::main]
+async fn main() -> Result<()> {
+  if let Err(e) = tokio_main().await {
+    eprintln!("{} error: Something went wrong", env!("CARGO_PKG_NAME"));
+    Err(e)
+  } else {
+    Ok(())
+  }
 }

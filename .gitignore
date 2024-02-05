@@ -1,3 +1,2 @@
 /target
-src/main.old.rs
-src/modules/mod.md
+.data/*.log
