@@ -8,11 +8,9 @@ documentation.workspace = true
 
 
 [dependencies]
-enum_dispatch = { workspace = true }
 clap = { workspace = true }
 inventory = { workspace = true }
 thiserror = { workspace = true }
-prettytable = { workspace = true }
 futures = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }

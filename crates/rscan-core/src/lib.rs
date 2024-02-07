@@ -1,6 +1,4 @@
 use async_trait::async_trait;
-use prettytable::{row, Table};
-use std::fmt::{Display, Formatter};
 use thiserror::Error;
 
 mod utils;
@@ -11,95 +9,100 @@ pub mod prelude;
 
 #[derive(Error, Debug)]
 pub enum ModuleError {
-    #[error("Module failed to execute")]
-    ExecutionError,
+  #[error("Module failed to execute")]
+  ExecutionError,
 }
 
-pub type ModuleResult = Result<Table, ModuleError>;
+pub type ModuleResult = Result<i32, ModuleError>;
 
 pub trait Module {
-    fn name(&self) -> &'static str;
-    fn identifier(&self) -> &'static str;
-    fn description(&self) -> &'static str;
-    fn author(&self) -> &'static str;
-    fn version(&self) -> &'static str;
-    fn category(&self) -> &'static str;
+  fn name(&self) -> &'static str;
+  fn identifier(&self) -> &'static str;
+  fn description(&self) -> &'static str;
+  fn author(&self) -> &'static str;
+  fn version(&self) -> &'static str;
+  fn category(&self) -> &'static str;
 }
 
 #[async_trait]
 pub trait GlobalAsyncModule: Module + Send + Sync {
-    async fn run_async(&self) -> ModuleResult;
+  async fn run_async(&self) -> ModuleResult;
 }
 
 #[async_trait]
 pub trait LocalAsyncModule: Module {
-    async fn run_async(&self) -> ModuleResult;
+  async fn run_async(&self) -> ModuleResult;
 }
 
 pub trait BlockingModule: Module {
-    fn run_blocking(&self) -> ModuleResult;
+  fn run_blocking(&self) -> ModuleResult;
 }
 /// Enum to represent the different execution types of modules.
 pub enum ModuleExecution {
-    Local(Box<dyn LocalAsyncModule>),
-    Global(Box<dyn GlobalAsyncModule + Send + Sync>),
-    Blocking(Box<dyn BlockingModule>),
+  Local(Box<dyn LocalAsyncModule>),
+  Global(Box<dyn GlobalAsyncModule + Send + Sync>),
+  Blocking(Box<dyn BlockingModule>),
 }
 
 pub struct ModuleHolder {
-    pub identifier: &'static str,
-    pub constructor: fn() -> ModuleExecution,
+  pub identifier: &'static str,
+  pub constructor: fn() -> ModuleExecution,
 }
 
 inventory::collect!(ModuleHolder);
 
 #[macro_export]
 macro_rules! define_module {
-    // Define an AsyncGlobal module (default if not specified).
-    (
+  // Define an AsyncGlobal module (default if not specified).
+  (
         identifier: $identifier:expr,
         category: $category:expr,
         async fn $fn_name:ident($($arg_name:ident: $arg_ty:ty),*) -> $ret_ty:ty $body:block
     ) => {
-        struct $fn_name;
+    struct $fn_name;
 
-        impl Module for $fn_name {
-            fn name(&self) -> &'static str {
-                stringify!($fn_name)
-            }
-            fn identifier(&self) -> &'static str {
-                $identifier
-            }
-            fn description(&self) -> &'static str {
-                "Automatically generated description"
-            }
-            fn author(&self) -> &'static str {
-                "Auto Author"
-            }
-            fn version(&self) -> &'static str {
-                "1.0"
-            }
-            fn category(&self) -> &'static str {
-                $category
-            }
-        }
+    impl Module for $fn_name {
+      fn name(&self) -> &'static str {
+        stringify!($fn_name)
+      }
 
-        #[async_trait::async_trait]
-        impl GlobalAsyncModule for $fn_name {
-            async fn run_async(&self) -> ModuleResult {
-                $body
-            }
-        }
+      fn identifier(&self) -> &'static str {
+        $identifier
+      }
 
-        fn constructor() -> ModuleExecution {
-            ModuleExecution::Global(Box::new($fn_name {}))
-        }
+      fn description(&self) -> &'static str {
+        "Automatically generated description"
+      }
 
-        inventory::submit! {
-            ModuleHolder {
-                identifier: $identifier,
-                constructor: constructor,
-            }
+      fn author(&self) -> &'static str {
+        "Auto Author"
+      }
+
+      fn version(&self) -> &'static str {
+        "1.0"
+      }
+
+      fn category(&self) -> &'static str {
+        $category
+      }
+    }
+
+    #[async_trait::async_trait]
+    impl GlobalAsyncModule for $fn_name {
+      async fn run_async(&self) -> ModuleResult {
+        $body
+      }
+    }
+
+    fn constructor() -> ModuleExecution {
+      ModuleExecution::Global(Box::new($fn_name {}))
+    }
+
+    inventory::submit! {
+        ModuleHolder {
+            identifier: $identifier,
+            constructor: constructor,
         }
-    }; // Definitions for AsyncLocal and Blocking could follow a similar pattern.
+    }
+  }; // Definitions for AsyncLocal and Blocking could follow a similar pattern.
 }
