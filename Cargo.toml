@@ -47,7 +47,6 @@ tracing-subscriber = { version = "0.3.17", features = ["env-filter", "serde"] }
 
 rscan_ui = { path = "crates/rscan-ui" }
 rscan_core = { path = "crates/rscan-core" }
-rscan_derive = { path = "crates/rscan-derive" }
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"

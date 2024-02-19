@@ -1,21 +1,12 @@
 use color_eyre::Result;
 use crossterm::event::{KeyCode::Char, KeyEvent};
-use ratatui::{
-  prelude::*,
-  widgets::{Block, Borders},
-};
+use ratatui::prelude::*;
 
-use crate::{action::Action, event::Event, tui::Tui, ui::Ui};
-
-#[derive(Default)]
-pub struct AppState {
-  should_quit: bool,
-}
+use crate::{action::Action, message::Message, state::AppState, tui::Tui, ui::draw};
 
 #[derive(Default)]
 pub struct App {
   state: AppState,
-  ui: Ui,
 }
 
 impl App {
@@ -24,9 +15,7 @@ impl App {
   }
 
   pub async fn run(&mut self) -> Result<()> {
-    let mut tui = Tui::new()?
-            .tick_rate(4.0) // 4 ticks per second
-            .frame_rate(30.0); // 30 frames per second
+    let mut tui = Tui::new()?;
 
     tui.enter()?; // Starts event handler, enters raw mode, enters alternate screen
 
@@ -55,7 +44,7 @@ impl App {
   }
 
   fn ui(&self, f: &mut Frame) {
-    match self.ui.draw(f, &self.state) {
+    match draw(f, &self.state) {
       Ok(_) => {},
       Err(_) => {},
     }
@@ -73,13 +62,13 @@ impl App {
   }
 
   // This maps events to actions.
-  fn handle_event(&mut self, evt: Event) -> Option<Action> {
+  fn handle_event(&mut self, evt: Message) -> Option<Action> {
     match evt {
-      Event::Quit => Some(Action::Quit),
-      Event::Tick => Some(Action::Tick),
-      Event::Init => Some(Action::Render),
-      Event::Render => Some(Action::Render),
-      Event::Key(key) => map_key_event_to_action(key),
+      Message::Quit => Some(Action::Quit),
+      Message::Tick => Some(Action::Tick),
+      Message::Init => Some(Action::Render),
+      Message::Render => Some(Action::Render),
+      Message::Key(key) => map_key_event_to_action(key),
 
       _ => None,
     }

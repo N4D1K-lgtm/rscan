@@ -1,8 +1,13 @@
 mod action;
 mod app;
+mod cli;
 mod config;
-mod event;
-mod tui;
+mod message;
+mod state;
+
+/// This is the main module for the TUI
+pub mod tui;
+
 mod ui;
 mod utils;
 

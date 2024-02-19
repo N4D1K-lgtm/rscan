@@ -1922,17 +1922,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rscan_derive"
-version = "0.1.0"
-dependencies = [
- "inventory",
- "proc-macro2",
- "quote",
- "rscan_core",
- "syn 2.0.49",
-]
-
-[[package]]
 name = "rscan_ui"
 version = "0.1.0"
 dependencies = [
@@ -1962,7 +1951,6 @@ dependencies = [
  "pretty_assertions",
  "ratatui",
  "rscan_core",
- "rscan_derive",
  "rscan_ui",
  "serde",
  "serde_json",
