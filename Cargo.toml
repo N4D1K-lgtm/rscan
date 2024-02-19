@@ -39,6 +39,8 @@ strum = { version = "0.26.1", features = ["derive"] }
 thiserror = "1.0.56"
 tokio = { version = "1.33.0", features = ["full"] }
 tokio-util = "0.7.10"
+tui-big-text = "0.4.1"
+tui-nodes = "0.4.0"
 tracing = "0.1.40"
 tracing-error = "0.2.0"
 tracing-subscriber = { version = "0.3.17", features = ["env-filter", "serde"] }

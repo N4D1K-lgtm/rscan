@@ -1,151 +1,94 @@
-use color_eyre::eyre::Result;
-use crossterm::event::KeyEvent;
-use ratatui::prelude::Rect;
-use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
-
-use crate::{
-  action::Action,
-  components::{home::Home, fps::FpsCounter, Component},
-  config::Config,
-  mode::Mode,
-  tui,
+use color_eyre::Result;
+use crossterm::event::{KeyCode::Char, KeyEvent};
+use ratatui::{
+  prelude::*,
+  widgets::{Block, Borders},
 };
 
+use crate::{action::Action, event::Event, tui::Tui, ui::Ui};
+
+#[derive(Default)]
+pub struct AppState {
+  should_quit: bool,
+}
+
+#[derive(Default)]
 pub struct App {
-  pub config: Config,
-  pub tick_rate: f64,
-  pub frame_rate: f64,
-  pub components: Vec<Box<dyn Component>>,
-  pub should_quit: bool,
-  pub should_suspend: bool,
-  pub mode: Mode,
-  pub last_tick_key_events: Vec<KeyEvent>,
+  state: AppState,
+  ui: Ui,
 }
 
 impl App {
-  pub fn new(tick_rate: f64, frame_rate: f64) -> Result<Self> {
-    let home = Home::new();
-    let fps = FpsCounter::default();
-    let config = Config::new()?;
-    let mode = Mode::Home;
-    Ok(Self {
-      tick_rate,
-      frame_rate,
-      components: vec![Box::new(home), Box::new(fps)],
-      should_quit: false,
-      should_suspend: false,
-      config,
-      mode,
-      last_tick_key_events: Vec::new(),
-    })
+  pub fn new() -> Self {
+    Self::default()
   }
 
   pub async fn run(&mut self) -> Result<()> {
-    let (action_tx, mut action_rx) = mpsc::unbounded_channel();
+    let mut tui = Tui::new()?
+            .tick_rate(4.0) // 4 ticks per second
+            .frame_rate(30.0); // 30 frames per second
 
-    let mut tui = tui::Tui::new()?.tick_rate(self.tick_rate).frame_rate(self.frame_rate);
-    // tui.mouse(true);
-    tui.enter()?;
-
-    for component in self.components.iter_mut() {
-      component.register_action_handler(action_tx.clone())?;
-    }
-
-    for component in self.components.iter_mut() {
-      component.register_config_handler(self.config.clone())?;
-    }
-
-    for component in self.components.iter_mut() {
-      component.init(tui.size()?)?;
-    }
+    tui.enter()?; // Starts event handler, enters raw mode, enters alternate screen
 
     loop {
-      if let Some(e) = tui.next().await {
-        match e {
-          tui::Event::Quit => action_tx.send(Action::Quit)?,
-          tui::Event::Tick => action_tx.send(Action::Tick)?,
-          tui::Event::Render => action_tx.send(Action::Render)?,
-          tui::Event::Resize(x, y) => action_tx.send(Action::Resize(x, y))?,
-          tui::Event::Key(key) => {
-            if let Some(keymap) = self.config.keybindings.get(&self.mode) {
-              if let Some(action) = keymap.get(&vec![key]) {
-                log::info!("Got action: {action:?}");
-                action_tx.send(action.clone())?;
-              } else {
-                // If the key was not handled as a single key action,
-                // then consider it for multi-key combinations.
-                self.last_tick_key_events.push(key);
+      tui.draw(|f| {
+        // Deref allows calling `tui.terminal.draw`
+        self.ui(f);
+      })?;
 
-                // Check for multi-key combinations
-                if let Some(action) = keymap.get(&self.last_tick_key_events) {
-                  log::info!("Got action: {action:?}");
-                  action_tx.send(action.clone())?;
-                }
-              }
-            };
-          },
-          _ => {},
+      if let Some(evt) = tui.next().await {
+        // `tui.next().await` blocks till next event
+        let mut maybe_action = self.handle_event(evt);
+        while let Some(action) = maybe_action {
+          maybe_action = self.update(action);
         }
-        for component in self.components.iter_mut() {
-          if let Some(action) = component.handle_events(Some(e.clone()))? {
-            action_tx.send(action)?;
-          }
-        }
-      }
+      };
 
-      while let Ok(action) = action_rx.try_recv() {
-        if action != Action::Tick && action != Action::Render {
-          log::debug!("{action:?}");
-        }
-        match action {
-          Action::Tick => {
-            self.last_tick_key_events.drain(..);
-          },
-          Action::Quit => self.should_quit = true,
-          Action::Suspend => self.should_suspend = true,
-          Action::Resume => self.should_suspend = false,
-          Action::Resize(w, h) => {
-            tui.resize(Rect::new(0, 0, w, h))?;
-            tui.draw(|f| {
-              for component in self.components.iter_mut() {
-                let r = component.draw(f, f.size());
-                if let Err(e) = r {
-                  action_tx.send(Action::Error(format!("Failed to draw: {:?}", e))).unwrap();
-                }
-              }
-            })?;
-          },
-          Action::Render => {
-            tui.draw(|f| {
-              for component in self.components.iter_mut() {
-                let r = component.draw(f, f.size());
-                if let Err(e) = r {
-                  action_tx.send(Action::Error(format!("Failed to draw: {:?}", e))).unwrap();
-                }
-              }
-            })?;
-          },
-          _ => {},
-        }
-        for component in self.components.iter_mut() {
-          if let Some(action) = component.update(action.clone())? {
-            action_tx.send(action)?
-          };
-        }
-      }
-      if self.should_suspend {
-        tui.suspend()?;
-        action_tx.send(Action::Resume)?;
-        tui = tui::Tui::new()?.tick_rate(self.tick_rate).frame_rate(self.frame_rate);
-        // tui.mouse(true);
-        tui.enter()?;
-      } else if self.should_quit {
-        tui.stop()?;
+      if self.state.should_quit {
         break;
       }
     }
-    tui.exit()?;
+
+    tui.exit()?; // stops event handler, exits raw mode, exits alternate screen
+
     Ok(())
+  }
+
+  fn ui(&self, f: &mut Frame) {
+    match self.ui.draw(f, &self.state) {
+      Ok(_) => {},
+      Err(_) => {},
+    }
+  }
+
+  /// This is essentially a reducer. This purely matches actions to state changes.
+  fn update(&mut self, action: Action) -> Option<Action> {
+    match action {
+      Action::Quit => self.state.should_quit = true,
+      Action::Tick => {},
+      Action::Render => {},
+      _ => {},
+    }
+    None
+  }
+
+  // This maps events to actions.
+  fn handle_event(&mut self, evt: Event) -> Option<Action> {
+    match evt {
+      Event::Quit => Some(Action::Quit),
+      Event::Tick => Some(Action::Tick),
+      Event::Init => Some(Action::Render),
+      Event::Render => Some(Action::Render),
+      Event::Key(key) => map_key_event_to_action(key),
+
+      _ => None,
+    }
+  }
+}
+
+fn map_key_event_to_action(key: KeyEvent) -> Option<Action> {
+  match key.code {
+    Char('q') => Some(Action::Quit),
+    _ => Some(Action::None),
   }
 }
